@@ -17,6 +17,7 @@ public class ClientSeeder
                 DisplayName = "My Client App",
                 Permissions =
                 {
+                    OpenIddictConstants.Permissions.Endpoints.Token,
                     OpenIddictConstants.Permissions.Endpoints.Authorization,
                     OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode,
                     OpenIddictConstants.Permissions.ResponseTypes.Code,
