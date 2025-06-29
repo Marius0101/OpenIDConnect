@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenIDConnect.Auth", "OpenIDConnect\OpenIDConnect.Auth.csproj", "{EC6F9FC6-F34C-92D9-3744-E97FEF0B18FE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenIDConnect.Auth", "OpenIDConnect.Auth\OpenIDConnect.Auth.csproj", "{EC6F9FC6-F34C-92D9-3744-E97FEF0B18FE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenIDConnect.Infrastructure", "OpenIDConnect.Infrastructure\OpenIDConnect.Infrastructure.csproj", "{C1935254-F91B-418D-A609-5672561F83AF}"
 EndProject
