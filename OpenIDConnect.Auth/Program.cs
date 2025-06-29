@@ -15,6 +15,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseOpenIddict();
 });
 
+builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
@@ -52,7 +53,7 @@ builder.Services.AddOpenIddict()
                .AddDevelopmentSigningCertificate();
 
         options.UseAspNetCore()
-               .EnableTokenEndpointPassthrough()
+
                .EnableAuthorizationEndpointPassthrough();
     });
     
@@ -70,8 +71,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.MapRazorPages();
-
 app.UseHttpsRedirection();
+
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers(); 
+    endpoints.MapRazorPages();  
+});
 
 app.Run();
