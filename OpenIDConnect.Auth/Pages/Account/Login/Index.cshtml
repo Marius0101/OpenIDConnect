@@ -3,24 +3,133 @@
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @{
     Layout = null;
+    bool isError = !string.IsNullOrEmpty(Model?.Error);
 }
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
     <title>Login</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f1f8;
+            color: #333;
+        }
+
+        .navbar {
+            background-color: #4A2574;
+            padding: 1rem;
+            color: white;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 3rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-top: 1.2rem;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            margin-top: 0.4rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: #6c3ca3;
+            box-shadow: 0 0 5px rgba(106, 55, 163, 0.3);
+            outline: none;
+        }
+
+        .input-validation-error {
+            border-color: rgb(206, 4, 4) !important;
+        }
+
+        button {
+            margin-top: 1.8rem;
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #4A2574;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:disabled {
+            background-color: #b59ac9;
+            cursor: not-allowed;
+        }
+
+        button:hover:enabled {
+            background-color: #3b1f5d;
+        }
+
+        .error-message {
+            color: rgb(206, 4, 4);
+            margin-top: 1.2rem;
+            text-align: center;
+            font-weight: 600
+        }
+    </style>
 </head>
 <body>
-    <h2>Login</h2>
-    <form method="post">
-        <label>Username:</label>
-        <input asp-for="Input.Username" />
-        <br />
-        <label>Password:</label>
-        <input asp-for="Input.Password" type="password" />
-        <br />
-        <button type="submit">Login</button>
-    </form>
-    <p style="color:red">@Model.Error</p>
+    <div class="navbar">
+        OpenID Connect
+    </div>
+
+    <div class="login-container">
+        <h2 style="text-align:center;">Login</h2>
+        <form method="post">
+            <label for="username">Username</label>
+            <input asp-for="Input.Username" type="text" id="username" class="@(isError ? "input-validation-error" : "")" />
+
+            <label for="password">Password</label>
+            <input asp-for="Input.Password" type="password" id="password" class="@(isError ? "input-validation-error" : "")" />
+
+            <button type="submit" id="loginBtn" disabled>Login</button>
+        </form>
+        @if (isError)
+        {
+            <p class="error-message">@Model?.Error</p>
+        }
+    </div>
+    <script>
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+
+        function toggleButtonState() {
+            const isFilled = usernameInput.value.trim() !== '' && passwordInput.value.trim() !== '';
+            loginBtn.disabled = !isFilled;
+        }
+
+        usernameInput.addEventListener('input', toggleButtonState);
+        passwordInput.addEventListener('input', toggleButtonState);
+        window.addEventListener('DOMContentLoaded', toggleButtonState);
+    </script>
 </body>
 </html>
