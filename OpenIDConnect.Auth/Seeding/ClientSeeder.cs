@@ -6,7 +6,7 @@ public class ClientSeeder
 {
     public static async Task SeedAsync(IServiceProvider serviceProvider)
     {
-        var applicationManager  = serviceProvider.GetRequiredService<IOpenIddictApplicationManager>();
+        var applicationManager = serviceProvider.GetRequiredService<IOpenIddictApplicationManager>();
         if (await applicationManager.FindByClientIdAsync("my-client") == null)
         {
             await applicationManager.CreateAsync(new OpenIddictApplicationDescriptor
@@ -24,6 +24,23 @@ public class ClientSeeder
                     "api"
                 }
             });
+
+        }
+        if (await applicationManager.FindByClientIdAsync("api-client") == null)
+        {
+            await applicationManager.CreateAsync(new OpenIddictApplicationDescriptor
+            {
+                ClientId = "api-client",
+                ClientSecret = "secret",
+                DisplayName = "My Client App",
+                Permissions =
+                {
+                    OpenIddictConstants.Permissions.Endpoints.Token,
+                    OpenIddictConstants.Permissions.GrantTypes.ClientCredentials,
+                    OpenIddictConstants.Permissions.Prefixes.Scope + "api"
+                }
+            });
+            
         }
 
     }
