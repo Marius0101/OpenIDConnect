@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using OpenIDConnect.Auth.GrantHandlers;
 using OpenIDConnect.Auth.Seeding;
 using OpenIDConnect.Infrastructure.DbContex;
-using OpenIddict.Server;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +14,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
     options.UseOpenIddict();
 });
-
+builder.Services.AddScoped<IGrantTypeHandler, ClientCredentialsGrantHandler>();
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 
@@ -41,6 +41,8 @@ builder.Services.AddOpenIddict()
     .AddServer(options =>
     {
         options.SetTokenEndpointUris("/connect/token");
+        options.AllowClientCredentialsFlow();
+
         options.SetAuthorizationEndpointUris("/connect/authorize");
 
         options.AllowPasswordFlow()
@@ -53,8 +55,8 @@ builder.Services.AddOpenIddict()
                .AddDevelopmentSigningCertificate();
 
         options.UseAspNetCore()
-
-               .EnableAuthorizationEndpointPassthrough();
+               .EnableAuthorizationEndpointPassthrough()
+               .EnableTokenEndpointPassthrough();
     });
     
 builder.Services.AddEndpointsApiExplorer();
