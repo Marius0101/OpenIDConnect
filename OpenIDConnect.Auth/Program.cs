@@ -15,6 +15,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseOpenIddict();
 });
 builder.Services.AddScoped<IGrantTypeHandler, ClientCredentialsGrantHandler>();
+builder.Services.AddScoped<IGrantTypeHandler, AuthorizationCodeGrantHandler>();
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 
@@ -40,14 +41,13 @@ builder.Services.AddOpenIddict()
     })
     .AddServer(options =>
     {
-        options.SetTokenEndpointUris("/connect/token");
-        options.AllowClientCredentialsFlow();
-
-        options.SetAuthorizationEndpointUris("/connect/authorize");
-
-        options.AllowPasswordFlow()
-               .AllowAuthorizationCodeFlow()
-               .AllowRefreshTokenFlow();
+        options.SetTokenEndpointUris("/connect/token")
+            .SetAuthorizationEndpointUris("/connect/authorize");;
+        options.AllowClientCredentialsFlow()
+            .AllowAuthorizationCodeFlow()
+            .AllowPasswordFlow()
+            .AllowAuthorizationCodeFlow()
+            .AllowRefreshTokenFlow();
 
         options.AcceptAnonymousClients();
 
