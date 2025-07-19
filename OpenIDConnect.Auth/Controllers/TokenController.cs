@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
-using OpenIDConnect.Auth.GrantHandlers;
+using OpenIDConnect.GrantHandlers;
 using OpenIddict.Abstractions;
 using static OpenIddict.Abstractions.OpenIddictConstants;
-namespace OpenIDConnect.Auth.Controllers;
+namespace OpenIDConnect.Controllers;
 
 [ApiController]
 public class TokenController : ControllerBase

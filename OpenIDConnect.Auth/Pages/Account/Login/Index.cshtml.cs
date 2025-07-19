@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace OpenIDConnect.Auth.Pages.Account.Login
+namespace OpenIDConnect.Pages.Account.Login
 {
     public class LoginModel : PageModel
     {

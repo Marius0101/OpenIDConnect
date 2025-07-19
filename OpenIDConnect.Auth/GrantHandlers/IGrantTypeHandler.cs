@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OpenIddict.Abstractions;
 
-namespace OpenIDConnect.Auth.GrantHandlers;
+namespace OpenIDConnect.GrantHandlers;
 
 public interface IGrantTypeHandler
 {
