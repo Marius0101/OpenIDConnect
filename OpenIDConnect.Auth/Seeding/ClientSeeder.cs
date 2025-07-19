@@ -40,8 +40,54 @@ public class ClientSeeder
                     OpenIddictConstants.Permissions.Prefixes.Scope + "api"
                 }
             });
-            
-        }
 
+        }
+        if (await applicationManager.FindByClientIdAsync("client-auth") == null)
+        {
+            await applicationManager.CreateAsync(new OpenIddictApplicationDescriptor
+            {
+                ClientId = "client-auth",
+                ClientSecret = "secret",
+                DisplayName = "Test Client without PKCE",
+                RedirectUris =
+                {
+                    new Uri("https://localhost:4200/callback")
+                },
+                Permissions =
+                {
+                    OpenIddictConstants.Permissions.Endpoints.Authorization,
+                    OpenIddictConstants.Permissions.Endpoints.Token,
+                    OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode,
+                    OpenIddictConstants.Permissions.ResponseTypes.Code,
+                    OpenIddictConstants.Permissions.Prefixes.Scope + "api"
+                }
+            });
+
+        }
+        if (await applicationManager.FindByClientIdAsync("client-pkce") == null)
+        {
+            await applicationManager.CreateAsync(new OpenIddictApplicationDescriptor
+            {
+                ClientId = "client-pkce",
+                DisplayName = "PKCE Public Client",
+                ClientType = OpenIddictConstants.ClientTypes.Public,
+                RedirectUris =
+                {
+                    new Uri("https://localhost:4200/callback")
+                },
+                Permissions =
+                {
+                    OpenIddictConstants.Permissions.Endpoints.Authorization,
+                    OpenIddictConstants.Permissions.Endpoints.Token,
+                    OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode,
+                    OpenIddictConstants.Permissions.ResponseTypes.Code,
+                    OpenIddictConstants.Permissions.Prefixes.Scope + "api",
+                },
+                Requirements =
+                {
+                    OpenIddictConstants.Requirements.Features.ProofKeyForCodeExchange
+                }
+            });
+        }
     }
 }
