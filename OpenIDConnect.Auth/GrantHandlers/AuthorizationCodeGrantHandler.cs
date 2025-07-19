@@ -18,7 +18,6 @@ public class AuthorizationCodeGrantHandler : IGrantTypeHandler
     private readonly IOpenIddictAuthorizationManager _authorizationManager;
     private readonly IOpenIddictTokenManager _tokenManager;
     private readonly UserManager<IdentityUser> _userManager;
-    private const string ScopePrefix = "scp:";
     public AuthorizationCodeGrantHandler(
         IOpenIddictApplicationManager applicationManager,
         IOpenIddictAuthorizationManager authorizationManager,
@@ -30,85 +29,113 @@ public class AuthorizationCodeGrantHandler : IGrantTypeHandler
         _tokenManager = tokenManager;
         _userManager = userManager;
     }
+    #region public methods
     public bool CanHandle(OpenIddictRequest request) => request.IsAuthorizationCodeGrantType();
 
     public async Task<IActionResult> HandleAsync(OpenIddictRequest request)
     {
-        OpenIddictEntityFrameworkCoreToken? authorizationCodeToken = await _tokenManager.FindByReferenceIdAsync(request.Code)
-            as OpenIddictEntityFrameworkCoreToken;
-        if (authorizationCodeToken is null)
-            return new BadRequestObjectResult(new OpenIddictResponse
-            {
-                Error = Errors.InvalidGrant,
-                ErrorDescription = "Invalid authorization code."
-            });
-        OpenIddictEntityFrameworkCoreAuthorization? authorization = await _authorizationManager.FindByIdAsync(authorizationCodeToken.Authorization.Id)
-        as OpenIddictEntityFrameworkCoreAuthorization;
+        var token = await GetAuthorizationCodeTokenAsync(request);
+        if (token is null)
+            return CreateErrorResponse(Errors.InvalidGrant, "Invalid authorization code.");
+
+        var authorization = await GetAuthorizationAsync(token);
         if (authorization is null)
-            return new BadRequestObjectResult(new OpenIddictResponse
-            {
-                Error = Errors.InvalidGrant,
-                ErrorDescription = "Invalid authorization."
-            });
-        var properties = authorization.Properties;
-        var application = await _applicationManager.FindByClientIdAsync(request.ClientId) as OpenIddictEntityFrameworkCoreApplication;
+            return CreateErrorResponse(Errors.InvalidGrant, "Invalid authorization.");
+
+        var application = await GetApplicationAsync(request);
         if (application is null)
-            return new BadRequestObjectResult(new OpenIddictResponse
-            {
-                Error = Errors.InvalidClient,
-                ErrorDescription = "Invalid client."
-            });
-        var creationDate = await _authorizationManager.GetCreationDateAsync(authorization);
-        if (creationDate + TimeSpan.FromMinutes(10) < DateTimeOffset.UtcNow)
+            return CreateErrorResponse(Errors.InvalidClient, "Invalid client.");
+
+        if (!await IsClientSecretValid(application, request))
         {
-            return new BadRequestObjectResult(new OpenIddictResponse
-            {
-                Error = Errors.InvalidGrant,
-                ErrorDescription = "The authorization code has expired."
-            });
+            return new ForbidResult(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
         }
-        var clientType = await _applicationManager.GetClientTypeAsync(application);
-        if (string.Equals(clientType, OpenIddictConstants.ClientTypes.Confidential, StringComparison.OrdinalIgnoreCase))
-        {
-            if (!await _applicationManager.ValidateClientSecretAsync(application, request.ClientSecret))
-                return new ForbidResult(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
-        }
-        string? redirectUris = authorization.Application.RedirectUris;
-        if (!redirectUris.Contains(request.RedirectUri))
-            return new BadRequestObjectResult(new OpenIddictResponse
-            {
-                Error = Errors.InvalidGrant,
-                ErrorDescription = "The redirect URI does not match."
-            });
+        if (await IsAuthorizationCodeExpired(authorization))
+            return CreateErrorResponse(Errors.InvalidGrant, "The authorization code has expired.");
+
+        if (!IsRedirectUriValid(authorization, request))
+            return CreateErrorResponse(Errors.InvalidGrant, "The redirect URI does not match.");
+
         var requestedScopes = await _authorizationManager.GetScopesAsync(authorization);
-        var claimsPrincipal  = await CreateClaimsPrincipal(authorization.Subject, requestedScopes.ToList());
+        var claimsPrincipal = await CreateClaimsPrincipal(authorization, requestedScopes.ToList());
         if (claimsPrincipal == null)
-        {
-            return new BadRequestObjectResult(new OpenIddictResponse
-            {
-                Error = Errors.InvalidGrant,
-                ErrorDescription = "The user associated with this authorization no longer exists."
-            });
-        }
-        await _tokenManager.TryRevokeAsync(authorizationCodeToken);
+            return CreateErrorResponse(Errors.InvalidGrant, "The user associated with this authorization no longer exists.");
+        await _tokenManager.TryRevokeAsync(token);
         return new SignInResult(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme, claimsPrincipal);
     }
-
-    private async Task<ClaimsPrincipal?> CreateClaimsPrincipal(string subject, List<String> grantedScopes)
+    #endregion
+    #region private methods
+    private async Task<OpenIddictEntityFrameworkCoreToken?> GetAuthorizationCodeTokenAsync(OpenIddictRequest request)
     {
+        if (string.IsNullOrEmpty(request.Code))
+            return null;
+        return await _tokenManager.FindByReferenceIdAsync(request.Code) as OpenIddictEntityFrameworkCoreToken;
+    }
+    private async Task<OpenIddictEntityFrameworkCoreAuthorization?> GetAuthorizationAsync(OpenIddictEntityFrameworkCoreToken token)
+    {
+        if (token?.Authorization?.Id is null)
+            return null;
+        return await _authorizationManager.FindByIdAsync(token.Authorization.Id) as OpenIddictEntityFrameworkCoreAuthorization;
+    }
+    private async Task<OpenIddictEntityFrameworkCoreApplication?> GetApplicationAsync(OpenIddictRequest request)
+    {
+        if (request.ClientId is null)
+            return null;
+        return await _applicationManager.FindByClientIdAsync(request.ClientId) as OpenIddictEntityFrameworkCoreApplication;
+    }
+    private async Task<bool> IsClientSecretValid(OpenIddictEntityFrameworkCoreApplication application, OpenIddictRequest request)
+    {
+        if (request.ClientSecret is null)
+            return false;
+        var clientType = await _applicationManager.GetClientTypeAsync(application);
+        if (string.Equals(clientType, ClientTypes.Confidential, StringComparison.OrdinalIgnoreCase))
+            return await _applicationManager.ValidateClientSecretAsync(application, request.ClientSecret);
+        return true;
+    }
+    private async Task<bool> IsAuthorizationCodeExpired(OpenIddictEntityFrameworkCoreAuthorization authorization)
+    {
+        var creationDate = await _authorizationManager.GetCreationDateAsync(authorization);
+        return creationDate + TimeSpan.FromMinutes(10) < DateTimeOffset.UtcNow;
+    }
+    private bool IsRedirectUriValid(OpenIddictEntityFrameworkCoreAuthorization authorization, OpenIddictRequest request)
+    {
+        if (authorization.Application?.RedirectUris is null || request.RedirectUri is null)
+            return false;
+        return authorization.Application.RedirectUris.Contains(request.RedirectUri);
+    }
+    private async Task<ClaimsPrincipal?> CreateClaimsPrincipal(OpenIddictEntityFrameworkCoreAuthorization authorization, List<String> grantedScopes)
+    {
+        if (authorization.Subject is null)
+            return null;
         var identity = new ClaimsIdentity(TokenValidationParameters.DefaultAuthenticationType, Claims.Name, Claims.Role);
         ClaimsPrincipal claimsPrincipal = new ClaimsPrincipal(identity);
-        claimsPrincipal.SetClaim(Claims.Subject, subject);
-        var user = await _userManager.FindByIdAsync(subject);
-        if (user is null) return null;
+
+        claimsPrincipal.SetClaim(Claims.Subject, authorization.Subject);
+        var user = await _userManager.FindByIdAsync(authorization.Subject);
+        if (user is null)
+            return null;
         claimsPrincipal.SetClaim(Claims.Name, user.UserName);
         claimsPrincipal.SetScopes(grantedScopes);
-        claimsPrincipal.SetDestinations(static claim => claim.Type switch
+        claimsPrincipal.SetDestinations(static claim =>
         {
-            Claims.Name when claim.Subject.HasScope(Scopes.Profile)
-                => [Destinations.AccessToken, Destinations.IdentityToken],
-            _ => [Destinations.AccessToken]
+            var subject = claim.Subject;
+            bool hasProfileScope = subject is not null && subject.HasScope(Scopes.Profile);
+            return claim.Type switch
+            {
+                Claims.Name when hasProfileScope => new[] { Destinations.AccessToken, Destinations.IdentityToken },
+                _ => new[] { Destinations.AccessToken }
+            };
         });
         return claimsPrincipal;
-    } 
+    }
+    private BadRequestObjectResult CreateErrorResponse(string error, string description)
+    {
+        return new BadRequestObjectResult(new OpenIddictResponse
+        {
+            Error = error,
+            ErrorDescription = description
+        });
+    }
+    #endregion
 }
+        
