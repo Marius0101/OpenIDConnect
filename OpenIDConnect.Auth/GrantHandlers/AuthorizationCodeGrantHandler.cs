@@ -10,7 +10,7 @@ using OpenIddict.Server.AspNetCore;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 using SignInResult = Microsoft.AspNetCore.Mvc.SignInResult;
 
-namespace OpenIDConnect.Auth.GrantHandlers;
+namespace OpenIDConnect.GrantHandlers;
 
 public class AuthorizationCodeGrantHandler : IGrantTypeHandler
 {

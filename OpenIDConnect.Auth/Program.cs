@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using OpenIDConnect.Auth.GrantHandlers;
-using OpenIDConnect.Auth.Seeding;
+using OpenIDConnect.GrantHandlers;
+using OpenIDConnect.Seeding;
 using OpenIDConnect.Infrastructure.DbContex;
 
 var builder = WebApplication.CreateBuilder(args);

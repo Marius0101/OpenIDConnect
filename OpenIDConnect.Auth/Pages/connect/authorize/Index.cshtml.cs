@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 
-namespace OpenIDConnect.Auth.Pages.connect.authorize;
+namespace OpenIDConnect.Pages.connect.authorize;
 public class AuthorizeModel : PageModel
 {
     public async Task<IActionResult> OnGetAsync()

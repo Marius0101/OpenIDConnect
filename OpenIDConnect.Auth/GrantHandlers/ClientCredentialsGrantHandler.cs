@@ -7,7 +7,7 @@ using OpenIddict.EntityFrameworkCore.Models;
 using OpenIddict.Server.AspNetCore;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
-namespace OpenIDConnect.Auth.GrantHandlers;
+namespace OpenIDConnect.GrantHandlers;
 
 public class ClientCredentialsGrantHandler : IGrantTypeHandler
 {

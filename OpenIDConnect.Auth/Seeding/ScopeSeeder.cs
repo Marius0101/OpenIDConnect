@@ -1,6 +1,6 @@
 using OpenIddict.Abstractions;
 
-namespace OpenIDConnect.Auth.Seeding;
+namespace OpenIDConnect.Seeding;
 
 public class ScopeSeeder
 {

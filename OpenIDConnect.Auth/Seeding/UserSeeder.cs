@@ -1,7 +1,7 @@
 using System;
 using Microsoft.AspNetCore.Identity;
 
-namespace OpenIDConnect.Auth.Seeding;
+namespace OpenIDConnect.Seeding;
 
 public class UserSeeder
 {
